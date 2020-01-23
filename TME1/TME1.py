@@ -182,12 +182,12 @@ if __name__ == '__main__':
 
     x = [i for i in range(5000)]
 
-    plt.plot(x, np.cumsum(score_random[0]))
-    plt.plot(x, np.cumsum(score_ucb[0]))
-    plt.plot(x, np.cumsum(score_staticBest[0]))
-    plt.plot(x, np.cumsum(score_linucb[0]))
     plt.plot(x, np.cumsum(score_optimale[0]))
+    plt.plot(x, np.cumsum(score_linucb[0]))
+    plt.plot(x, np.cumsum(score_staticBest[0]))
+    plt.plot(x, np.cumsum(score_ucb[0]))
+    plt.plot(x, np.cumsum(score_random[0]))
 
-    plt.legend(['Perfect', 'LinUCB', 'staticBest', 'UCB', 'Random'], loc='upper left')
+    plt.legend(['Perfect', 'LinUCB', 'StaticBest', 'UCB', 'Random'], loc='upper left')
 
     plt.show()
