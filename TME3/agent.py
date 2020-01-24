@@ -44,8 +44,7 @@ class Q_learning(object):
 
         if done:
             self.eps *= 0.999
-            self.alpha *= 0.9995
-            return
+            self.alpha *= 0.9993
 
         if np.random.random_sample() > self.eps:
             a = self.Q[obs].index(max(self.Q[obs]))
@@ -59,14 +58,13 @@ class Q_learning(object):
 
     def update_Q(self, reward, obs):
 
-        if self.last_obs == None or self.last_a == None:
+        if self.last_obs is None or self.last_a is None:
             return
 
         a = self.Q[obs].index(max(self.Q[obs]))
 
         self.Q[self.last_obs][self.last_a] += self.alpha * (
-                    reward + self.gamma * self.Q[obs][a] - self.Q[self.last_obs][self.last_a])
-
+                reward + self.gamma * self.Q[obs][a] - self.Q[self.last_obs][self.last_a])
 
     def reinitialise(self):
         self.last_obs = None
@@ -74,15 +72,16 @@ class Q_learning(object):
 
 
 class Dyna_Q(object):
-    def __init__(self, action_space):
+
+    def __init__(self, action_space, statedic):
         self.action_space = action_space
 
         self.alpha = 0.1
-        self.alpha_r = 0.1
-        self.alpha_p = 0.1
+        self.alpha_r = 0.5
+        self.alpha_p = 0.5
 
         self.gamma = 0.95
-        self.eps = 0.2
+        self.eps = 1
         self.last_obs = None
         self.last_a = None
         self.Q = dict()
@@ -110,6 +109,11 @@ class Dyna_Q(object):
         self.last_obs = obs
         self.last_a = a
 
+        if done:
+            self.eps *= 0.999
+            self.alpha_r *= 0.9993
+            self.alpha_p *= 0.9993
+
         return a
 
     def update_Q(self, reward, obs):
@@ -120,7 +124,7 @@ class Dyna_Q(object):
         a = self.Q[obs].index(max(self.Q[obs]))
 
         self.Q[self.last_obs][self.last_a] += self.alpha * (
-                    reward + self.gamma * self.Q[obs][a] - self.Q[self.last_obs][self.last_a])
+                reward + self.gamma * self.Q[obs][a] - self.Q[self.last_obs][self.last_a])
 
     def update_R(self, reward, obs):
 
@@ -147,8 +151,8 @@ class Dyna_Q(object):
         self.last_a = None
 
 
-class Sarsa(object):
-    def __init__(self, action_space):
+class Sarsa:
+    def __init__(self, action_space, statedic):
         self.action_space = action_space
 
         self.alpha = 0.1
@@ -180,7 +184,7 @@ class Sarsa(object):
             return
 
         self.Q[self.last_obs][self.last_a] += self.alpha * (
-                    reward + self.gamma * self.Q[obs][a] - self.Q[self.last_obs][self.last_a])
+                reward + self.gamma * self.Q[obs][a] - self.Q[self.last_obs][self.last_a])
 
     def reinitialise(self):
         self.last_obs = None
