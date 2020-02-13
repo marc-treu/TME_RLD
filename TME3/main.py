@@ -43,7 +43,7 @@ def execute_agent(agent_object=RandomAgent, plan=0, episode_count=10_000, visu=F
             obs, reward, done, _ = env.step(action)
             rsum += reward
             asum += 1
-            if env.verbose and visu and asum < 300:
+            if visu:
                 env.render(FPS)
             if done:
                 agent.act(obs, reward, done)
@@ -55,7 +55,9 @@ def execute_agent(agent_object=RandomAgent, plan=0, episode_count=10_000, visu=F
         rsum_list.append(rsum)
         asum_list.append(asum)
 
+    print()
     print("score moyen =", sum(rsum_list) / episode_count)
+    print("score moyen 1000 dernier =", sum(rsum_list[-1000:]) / 1000)
 
     print("done")
     env.close()
@@ -86,62 +88,18 @@ def main():
 
     plt.show()
 
+    affiche_cumule(resultat)
+
+
+def affiche_cumule(liste):
+
+    x = [i for i in range(len(liste[0][0]))]
+    for i in liste:
+        plt.plot(x, np.cumsum(i[0]))
+    plt.legend(['Random', 'Q_learning', 'Dyna_Q', 'Sarsa'], loc='upper left')
+
+    plt.show()
+
 
 if __name__ == '__main__':
-    #execute_agent(Sarsa, plan=2, visu=True, episode_count=10_000)
     main()
-
-    """
-    
-        env = gym.make("gridworld-v0")
-    env.seed(0)  # Initialise le seed du pseudo-random
-    print("env.action_space", env.action_space)  # Quelles sont les actions possibles
-
-    obs, r, done, info =env.step(2)
-    print(info)  # faire action 1 et retourne l'observation, le reward, et un done un booleen (jeu fini ou pas)
-    # env.render()  # permet de visualiser la grille du jeu
-    # env.render(mode="human")  # visualisation sur la console
-    statedic, mdp = env.getMDP()  # recupere le mdp : statedic
-
-    # print("Nombre d'etats : ", len(statedic))  # nombre d'etats ,statedic : etat-> numero de l'etat
-    # state, transitions = list(mdp.items())[0]
-    # print(state)  # un etat du mdp
-    # print(transitions)  # dictionnaire des transitions pour l'etat :  {action-> [proba,etat,reward,done]}
-    # # input('ok ?')
-    # env.close()
-    
-    
-    # Execution avec un Agent
-    agent = RandomAgent(env.action_space)
-
-    # Faire un fichier de log sur plusieurs scenarios
-    outdir = 'gridworld-v0/random-agent-results'
-    envm = wrappers.Monitor(env, directory=outdir, force=True, video_callable=False)
-    env.setPlan("gridworldPlans/plan0.txt", {0: -0.001, 3: 1, 4: 1, 5: -1, 6: -1})
-    env.seed()  # Initialiser le pseudo aleatoire
-    episode_count = 1000
-    reward = 0
-    done = False
-    rsum = 0
-    FPS = 0.01
-    for i in range(episode_count):
-        obs = envm.reset()
-        env.verbose = (i % 100 == 0 and i > 0)  # afficher 1 episode sur 100
-        if env.verbose:
-            env.render(FPS)
-        j = 0
-        rsum = 0
-        while True:
-            action = agent.act(obs, reward, done)
-            obs, reward, done, _ = envm.step(action)
-            rsum += reward
-            j += 1
-            if env.verbose:
-                env.render(FPS)
-            if done:
-                print("Episode : " + str(i) + " rsum=" + str(rsum) + ", " + str(j) + " actions")
-                break
-
-    print("done")
-    env.close()
-    """
