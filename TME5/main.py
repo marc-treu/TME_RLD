@@ -64,7 +64,7 @@ if __name__ == "__main__":
     torch.manual_seed(1)
     learning_rate = 0.01
     gamma = 0.99
-    epochs = 100
+    epochs = 650
     t = 10
 
     agent = Agent(env, gamma, learning_rate)
