@@ -12,6 +12,15 @@ import torch
 from collections import deque
 import random
 
+class RandomAgent(object):
+    """The world's simplest agent!"""
+
+    def __init__(self, action_space):
+        self.action_space = action_space
+
+    def act(self, observation, reward, done):
+        return self.action_space.sample()
+
 class NN(nn.Module):
 
     def __init__(self, inSize, outSize, layers=[]):
@@ -44,9 +53,9 @@ class Agent:
         self.iter = 0
         self.C = C
 
-        self.Q = NN(4,2)
+        self.Q = NN(4,2, layers=[64, 64])
         self.optim = torch.optim.Adam(self.Q.parameters(),lr=lr)
-        self.target = NN(4,2)
+        self.target = NN(4,2, layers=[64, 64])
         self.D = deque(maxlen=maxlen)
 
     def reinitialise(self):
@@ -97,14 +106,15 @@ class Agent:
         q = q[range(self.batch_size), la]
 
         y = torch.zeros(self.batch_size)
-        for i, x in enumerate(batch):
-            x=x[0]
-            if x[4]:
-                y[i] = x[2]
-            else:
-                y[i] = x[2] + self.gamma * max(self.target.forward(x[3]))
+        with torch.no_grad():
+            for i, x in enumerate(batch):
+                x=x[0]
+                if x[4]:
+                    y[i] = x[2]
+                else:
+                    y[i] = x[2] + self.gamma * max(self.target.forward(x[3]))
 
-
+        self.optim.zero_grad()
         loss = self.criterion(q, y)
         loss.backward()
         self.optim.step()
@@ -125,11 +135,7 @@ class Agent:
         return a.item()
 
 
-
-
-
-if __name__ == '__main__':
-    
+def execute_agent(agent_object=RandomAgent, plan=0, episode_count=1000, visu=False):
     env = gym.make('CartPole-v1')
 
     agent = Agent(1000, 30, 0.95)
@@ -139,7 +145,7 @@ if __name__ == '__main__':
     envm = wrappers.Monitor(env, directory=outdir, force=True, video_callable=False)
     env.seed(0)
 
-    episode_count = 100
+    # episode_count = 100
     reward = 0
     done = False
     env.verbose = True
@@ -147,8 +153,9 @@ if __name__ == '__main__':
     rsum = 0
     FPS = 0.0001
     list_rsum = list()
+    asum_list = list()
     for i in range(episode_count):
-        print(i)
+        # print(i)
         obs = envm.reset()
         env.verbose = (i % 100 == 0 and i > 0)  # afficher 1 episode sur 100
         if env.verbose:
@@ -159,16 +166,65 @@ if __name__ == '__main__':
             action = agent.act(obs, reward, done)
             obs, reward, done, _ = envm.step(action)
             rsum += reward
+            
             j += 1
             if env.verbose:
                 env.render(FPS)
             if done:
-                print("Episode : " + str(i) + " rsum=" + str(rsum) + ", " + str(j) + " actions")
-                list_rsum.append(rsum)
+                # print("Episode : " + str(i) + " rsum=" + str(rsum) + ", " + str(j) + " actions")
+                # list_rsum.append(rsum)
                 agent.reinitialise()
                 break
-    plt.figure()
-    plt.plot(list_rsum)
-    plt.savefig('dqn.png')
+
+        list_rsum.append(rsum)
+        asum_list.append(j)
+
+    print("score moyen =", sum(list_rsum) / episode_count)
+    print("score moyen 1000 dernier =", sum(list_rsum[-1000:]) / 1000)
     print("done")
     env.close()
+
+    return list_rsum, asum_list
+
+def main():
+    epoque = 200
+    tranche = 10
+
+    resultat = []
+    for agent in [RandomAgent, Agent]:
+        print(agent)
+        res_rewards, res_actions = execute_agent(agent, plan=0, visu=False, episode_count=epoque)
+
+        resultat.append(([sum(res_rewards[i * tranche - tranche:i * tranche]) / tranche for i in
+                          range(1, int(epoque / tranche))],
+                         [sum(res_actions[i * tranche - tranche:i * tranche]) / tranche for i in
+                          range(1, int(epoque / tranche))]))
+
+    moy = [i * tranche - tranche / 2 for i in range(1, int(epoque / tranche))]
+
+    for resultat_agent in resultat:
+        plt.plot(moy, resultat_agent[0])
+
+    plt.legend(['Random', 'DQN'], loc='upper left')
+
+    plt.show()
+
+    affiche_cumule(resultat)
+
+def affiche_cumule(liste):
+
+    x = [i for i in range(len(liste[0][0]))]
+    for i in liste:
+        plt.plot(x, np.cumsum(i[0]))
+    plt.legend(['Random', 'Q_learning', 'Dyna_Q', 'Sarsa'], loc='upper left')
+
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()  
+    
+    # plt.figure()
+    # plt.plot(list_rsum)
+    # plt.savefig('TME4/dqn.png')
+
