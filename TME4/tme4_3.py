@@ -93,7 +93,8 @@ def main():
         done = False
 
         while not done:
-            a = q.sample_action(torch.from_numpy(s).float(), epsilon)      
+            a = q.sample_action(torch.from_numpy(s).float(), epsilon) 
+            print('a =', a)     
             s_prime, r, done, info = env.step(a)
             done_mask = 0.0 if done else 1.0
             memory.put((s,a,r/100.0,s_prime, done_mask))
